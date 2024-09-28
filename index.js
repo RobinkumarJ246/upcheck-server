@@ -1,19 +1,22 @@
-// index.js
 const express = require('express');
 const { MongoClient } = require('mongodb');
+const axios = require('axios'); // Use axios to keep the server alive
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Vercel will assign a port
+const PORT = process.env.PORT || 3000; // Render assigns a port
 
 // Middleware to parse JSON
 app.use(express.json());
 
-// MongoDB connection string
-const MONGO_URI = "mongodb+srv://robin246j:RdYG9uPZukPXKuaI@app.zfm1a.mongodb.net/?retryWrites=true&w=majority&appName=App"
+// Use the MongoDB URI from Render environment variables
+const MONGO_URI = process.env.MONGO_URI;
 
 async function connectDB() {
   try {
-    const client = new MongoClient(MONGO_URI);
+    const client = new MongoClient(MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
     await client.connect();
     console.log("MongoDB Connected");
     return client;
@@ -31,7 +34,7 @@ connectDB().then(client => {
 
 // Example endpoint to test the API
 app.get('/', (req, res) => {
-  res.send('Hello World!');
+  res.send('Hello World from Render!');
 });
 
 // Example endpoint to fetch data from MongoDB
@@ -60,11 +63,18 @@ app.post('/api/data', async (req, res) => {
   }
 });
 
-// Start the server only if running locally
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-  });
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+// Keep server alive to prevent sleeping on idle
+if (process.env.NODE_ENV === 'production') {
+  setInterval(() => {
+    axios.get(`http://localhost:${PORT}`) // Ping the server at intervals
+      .then(() => console.log('Keep-alive ping'))
+      .catch(err => console.error('Error in keep-alive ping:', err));
+  }, 20 * 60 * 1000); // Ping every 20 minutes (adjust time as needed)
 }
 
 module.exports = app;
