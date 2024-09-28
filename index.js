@@ -74,7 +74,7 @@ if (process.env.NODE_ENV === 'production') {
     axios.get(`http://localhost:${PORT}`) // Ping the server at intervals
       .then(() => console.log('Keep-alive ping'))
       .catch(err => console.error('Error in keep-alive ping:', err));
-  }, 20 * 60 * 1000); // Ping every 20 minutes (adjust time as needed)
+  }, 10 * 60 * 1000); // Ping every 20 minutes (adjust time as needed)
 }
 
 module.exports = app;
