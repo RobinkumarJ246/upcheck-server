@@ -58,7 +58,7 @@ app.get('/api/data', async (req, res) => {
 
 // Registration endpoint
 app.post('/api/v1/auth/register', async (req, res) => {
-  const { email, password } = req.body;
+  const { displayName, username, email, password } = req.body;
 
   try {
     const db = dbClient.db('app');
@@ -75,6 +75,8 @@ app.post('/api/v1/auth/register', async (req, res) => {
 
     // Insert the new user
     const newUser = {
+      displayName,
+      username,
       email,
       password: hashedPassword,
       createdAt: new Date(),
