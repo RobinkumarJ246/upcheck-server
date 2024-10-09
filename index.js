@@ -56,6 +56,38 @@ app.get('/api/data', async (req, res) => {
   }
 });
 
+// Registration endpoint
+app.post('/api/v1/auth/register', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const db = dbClient.db('app');
+    const collection = db.collection('users');
+
+    // Check if the user already exists
+    const existingUser = await collection.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
+
+    // Insert the new user
+    const newUser = {
+      email,
+      password: hashedPassword,
+      createdAt: new Date(),
+    };
+
+    const result = await collection.insertOne(newUser);
+    res.status(201).json({ message: "User created", userId: result.insertedId });
+  } catch (error) {
+    console.error("Error during registration:", error);
+    res.status(500).json({ message: "Error during registration" });
+  }
+});
+
 // Login endpoint
 app.post('/api/v1/auth/login', async (req, res) => {
   const { email, password } = req.body;
