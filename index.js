@@ -2,6 +2,9 @@ const express = require('express');
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcrypt'); // Use bcrypt to hash passwords
 const axios = require('axios'); // Use axios to keep the server alive
+const nodemailer = require('nodemailer');
+const http = require('http');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000; // Render assigns a port
@@ -11,6 +14,42 @@ app.use(express.json());
 
 // Use the MongoDB URI from Render environment variables
 const MONGO_URI = process.env.MONGO_URI;
+
+const generateVerificationCode = () => {
+  return crypto.randomBytes(3).toString('hex').toUpperCase();  // Generates a 6-character hex code
+};
+
+// Nodemailer transporter setup
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  auth: {
+    user: 'innovatexcel.team@gmail.com', // Your email address
+    pass: 'bbyw zbva omrb tche', // Your email password or app-specific password if using Gmail
+  },
+});
+
+// Function to send custom email
+const sendCustomEmail = (toEmail, subject, htmlContent) => {
+  // Email options
+  const mailOptions = {
+    from: 'innovatexcel.team@gmail.com', // Sender address
+    to: toEmail, // Recipient address
+    subject: subject, // Subject line
+    html: htmlContent, // HTML content
+  };
+
+  // Send email
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending email:', error);
+    } else {
+      console.log('Email sent:', info.response);
+    }
+  });
+};
 
 async function connectDB() {
   try {
@@ -129,6 +168,60 @@ app.post('/api/v2/auth/register', async (req, res) => {
   }
 });
 
+//Generate email verification code and send to the mail
+
+app.post('/api/v1/auth/verify-email', async (req, res) => {
+  try {
+    const db = dbClient.db('app');
+    const collection = db.collection('v_codes');
+    // Generate a 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store the verification code with the email and expiration time
+    const expirationTime = new Date();
+    expirationTime.setMinutes(expirationTime.getMinutes() + 10); // Expires in 10 minutes
+    await emailvcodes.insertOne({
+      email: req.body.email,
+      code: verificationCode,
+      expiresAt: expirationTime,
+    });
+
+    // Send the verification code via email
+    const subject = 'Email Verification Code';
+    const htmlContent = `
+      <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Email Verification Code</title>
+      </head>
+      <body style="font-family: Arial, sans-serif;">
+        <header style="background-color: #f0f0f0; padding: 20px;">
+          <h1 style="margin: 0; color: #333;">Email Verification Code</h1>
+        </header>
+        <section style="padding: 20px;">
+          <p>Hello ${req.body.userName},</p>
+          <p>Your verification code is: <strong>${verificationCode}</strong></p>
+          <p>Please use this code to verify your email address within the next 10 minutes.</p>
+          <p>If you didnt request the code, please ignore this email</p>
+        </section>
+        <footer style="background-color: #f0f0f0; padding: 20px; text-align: center;">
+          <p style="margin: 0;">Best regards,<br> Upcheck team</p>
+        </footer>
+      </body>
+    `;
+
+    sendCustomEmail(req.body.email, subject, htmlContent);
+
+    res.status(200).json({ message: 'Verification code sent successfully'});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'An error occurred during verification code sending' });
+  } finally {
+    await client.close();
+  }
+});
+
 // Login endpoint
 app.post('/api/v1/auth/login', async (req, res) => {
   const { email, password } = req.body;
@@ -160,6 +253,8 @@ app.post('/api/v1/auth/login', async (req, res) => {
     res.status(500).json({ message: "Error during login" });
   }
 });
+
+//login v2
 
 app.post('/api/v2/auth/login', async (req, res) => {
   const { email, password } = req.body;
@@ -196,19 +291,6 @@ app.post('/api/v2/auth/login', async (req, res) => {
   } catch (error) {
     console.error("Error during login:", error);
     res.status(500).json({ message: "Error during login" });
-  }
-});
-
-// Example endpoint to test POST requests
-app.post('/api/data', async (req, res) => {
-  try {
-    const db = dbClient.db('your_database_name'); // Replace with your database name
-    const collection = db.collection('your_collection_name'); // Replace with your collection name
-    const result = await collection.insertOne(req.body); // Insert the posted data
-    res.status(201).json({ message: "Data added", id: result.insertedId });
-  } catch (error) {
-    console.error("Error inserting data:", error);
-    res.status(500).json({ message: "Error inserting data" });
   }
 });
 
