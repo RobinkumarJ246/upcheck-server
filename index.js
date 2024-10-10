@@ -180,7 +180,7 @@ app.post('/api/v1/auth/verify-email', async (req, res) => {
     // Store the verification code with the email and expiration time
     const expirationTime = new Date();
     expirationTime.setMinutes(expirationTime.getMinutes() + 10); // Expires in 10 minutes
-    await emailvcodes.insertOne({
+    await collection.insertOne({
       email: req.body.email,
       code: verificationCode,
       expiresAt: expirationTime,
