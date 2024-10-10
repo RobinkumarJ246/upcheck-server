@@ -168,6 +168,111 @@ app.post('/api/v2/auth/register', async (req, res) => {
   }
 });
 
+//Welcome users
+
+app.post('/api/v1/mailing/welcome', async (req, res) => {
+  try {
+    const subject = 'Upcheck Onboarding';
+    const htmlContent = `
+    <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        header {
+            background-color: #007BFF;
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+        section {
+            padding: 20px;
+        }
+        h1 {
+            margin: 0;
+        }
+        p {
+            line-height: 1.6;
+        }
+        .feature {
+            background-color: #e9ecef;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        footer {
+            background-color: #007BFF;
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+        a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome to Upcheck!</h1>
+    </header>
+    <section>
+        <p>Hello ${req.body.userName},</p>
+        <p>Thank you for registering with Upcheck! We are excited to have you on board. Our app is designed to help you monitor and optimize your shrimp cultivation process. Here are some of the key features you can look forward to:</p>
+
+        <div class="feature">
+            <strong>✨ Yield Prediction:</strong> Get accurate predictions to maximize your harvest.
+        </div>
+        <div class="feature">
+            <strong>💧 Pond Quality Analysis:</strong> Monitor water quality parameters for optimal shrimp health.
+        </div>
+        <div class="feature">
+            <strong>🍽️ Feed Management:</strong> Track and manage your feed usage and inventory effectively.
+        </div>
+        <div class="feature">
+            <strong>🐟 Shrimp Behavior Analysis:</strong> Gain insights into shrimp behavior for better management.
+        </div>
+        <div class="feature">
+            <strong>🦠 Disease Prediction:</strong> Receive alerts for potential diseases before they become critical.
+        </div>
+        <div class="feature">
+            <strong>🌐 Market Connection:</strong> Connect with markets for selling your produce.
+        </div>
+        <div class="feature">
+            <strong>👥 Peer Connection:</strong> Network with fellow shrimp cultivators for shared insights and support.
+        </div>
+        <div class="feature">
+            <strong>📰 Real-time News & Updates:</strong> Stay informed with the latest trends and information in shrimp cultivation.
+        </div>
+
+        <p>We are here to support you every step of the way. If you have any questions or need assistance, feel free to reach out to us.</p>
+    </section>
+    <footer>
+        <p style="margin: 0;">Best regards,<br>The Upcheck Team</p>
+        <p><a href="https://upcheck.framer.website">Visit our website</a></p>
+    </footer>
+</body>
+    `;
+
+    sendCustomEmail(req.body.email, subject, htmlContent);
+
+    res.status(200).json({ message: 'Welcome mail sent successfully'});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'An error occurred during welcome mail sending' });
+  }
+});
+
 //Generate email verification code and send to the mail
 
 app.post('/api/v1/auth/verify-email', async (req, res) => {
@@ -250,7 +355,9 @@ app.post('/api/v1/auth/verify-code', async (req, res) => {
     // await db.collection('users').updateOne({ userId }, { $set: { emailVerified: true } });
     
     // Optionally: Remove the used verification code from the database
-    //await collection.deleteOne({ email, code: verificationCode });
+    if(record){
+    await collection.deleteOne({ email, code: verificationCode });
+    }
 
     res.status(200).json({ message: 'Email verified successfully' });
   } catch (err) {
