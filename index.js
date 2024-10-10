@@ -26,8 +26,8 @@ const transporter = nodemailer.createTransport({
   port: 465,
   secure: true,
   auth: {
-    user: 'innovatexcel.team@gmail.com', // Your email address
-    pass: 'bbyw zbva omrb tche', // Your email password or app-specific password if using Gmail
+    user: 'upcheck.team@gmail.com', // Your email address
+    pass: 'cfni tpqz rycd llev', // Your email password or app-specific password if using Gmail
   },
 });
 
