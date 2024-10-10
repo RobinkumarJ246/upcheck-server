@@ -40,7 +40,7 @@ app.get('/', (req, res) => {
 
 // Example endpoint to test the logs
 app.get('/logs', (req, res) => {
-  res.send('Login endpoint added');
+  res.send('Login endpoint added\nRegistration endpoint added\nToken generation included in request and store in database')
 });
 
 // Example endpoint to fetch data from MongoDB
@@ -56,8 +56,8 @@ app.get('/api/data', async (req, res) => {
   }
 });
 
-// Registration endpoint
-app.post('/api/v1/auth/register', async (req, res) => {
+// Registration endpoint v2
+app.post('/api/v2/auth/register', async (req, res) => {
   const { displayName, username, email, password } = req.body;
 
   try {
@@ -84,6 +84,46 @@ app.post('/api/v1/auth/register', async (req, res) => {
 
     const result = await collection.insertOne(newUser);
     res.status(201).json({ message: "User created", userId: result.insertedId });
+  } catch (error) {
+    console.error("Error during registration:", error);
+    res.status(500).json({ message: "Error during registration" });
+  }
+});
+
+const bcrypt = require('bcrypt');
+const { ObjectId } = require('mongodb');
+
+app.post('/api/v1/auth/register', async (req, res) => {
+  const { displayName, username, email, password, token } = req.body;
+
+  try {
+    const db = dbClient.db('app');
+    const collection = db.collection('users');
+
+    // Check if the user already exists by email
+    const existingUser = await collection.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    // Hash the password using bcrypt
+    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
+
+    // Create new user object with hashed password and the token
+    const newUser = {
+      displayName,
+      username,
+      email,
+      password: hashedPassword,
+      token,  // Store the token (can be an API key or JWT token later)
+      createdAt: new Date(),
+    };
+
+    // Insert the new user into the database
+    const result = await collection.insertOne(newUser);
+
+    // Send success response with the inserted user's ID
+    res.status(201).json({ message: "User created", userId: result.insertedId, token });
   } catch (error) {
     console.error("Error during registration:", error);
     res.status(500).json({ message: "Error during registration" });
