@@ -220,6 +220,45 @@ app.post('/api/v1/auth/verify-email', async (req, res) => {
   }
 });
 
+// Verify the email verification code
+app.post('/api/v1/auth/verify-code', async (req, res) => {
+  try {
+    const { email, verificationCode, userId } = req.body; // Expecting email, code, and userId in the request body
+    const db = dbClient.db('app');
+    const collection = db.collection('v_codes');
+
+    // Fetch the record from the database
+    const record = await collection.findOne({ email, code: verificationCode });
+
+    if (!record) {
+      return res.status(400).json({ error: 'Invalid verification code or email' });
+    }
+
+    // Check if the code is expired
+    const currentTime = new Date();
+    if (currentTime > record.expiresAt) {
+      return res.status(400).json({ error: 'Verification code has expired' });
+    }
+
+    // Optionally: Check if userId matches (if you are storing userId with the verification codes)
+    // const userRecord = await db.collection('users').findOne({ userId });
+    // if (!userRecord || userRecord.email !== email) {
+    //   return res.status(400).json({ error: 'User ID does not match the email' });
+    // }
+
+    // If everything is valid, you can proceed to mark the email as verified
+    // await db.collection('users').updateOne({ userId }, { $set: { emailVerified: true } });
+    
+    // Optionally: Remove the used verification code from the database
+    await collection.deleteOne({ email, code: verificationCode });
+
+    res.status(200).json({ message: 'Email verified successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'An error occurred during verification' });
+  }
+});
+
 // Login endpoint
 app.post('/api/v1/auth/login', async (req, res) => {
   const { email, password } = req.body;
