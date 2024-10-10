@@ -217,8 +217,6 @@ app.post('/api/v1/auth/verify-email', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'An error occurred during verification code sending' });
-  } finally {
-    await client.close();
   }
 });
 
