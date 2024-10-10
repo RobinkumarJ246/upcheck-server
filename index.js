@@ -90,9 +90,6 @@ app.post('/api/v2/auth/register', async (req, res) => {
   }
 });
 
-const bcrypt = require('bcrypt');
-const { ObjectId } = require('mongodb');
-
 app.post('/api/v1/auth/register', async (req, res) => {
   const { displayName, username, email, password, token } = req.body;
 
