@@ -56,7 +56,7 @@ app.get('/api/data', async (req, res) => {
   }
 });
 
-// Registration endpoint v2
+// Registration endpoint v1
 app.post('/api/v1/auth/register', async (req, res) => {
   const { displayName, username, email, password } = req.body;
 
@@ -90,6 +90,7 @@ app.post('/api/v1/auth/register', async (req, res) => {
   }
 });
 
+//v2
 app.post('/api/v2/auth/register', async (req, res) => {
   const { displayName, username, email, password, token } = req.body;
 
@@ -106,13 +107,14 @@ app.post('/api/v2/auth/register', async (req, res) => {
     // Hash the password using bcrypt
     const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
 
-    // Create new user object with hashed password and the token
+    // Create new user object with hashed password, the token, and email_verified set to false
     const newUser = {
       displayName,
       username,
       email,
       password: hashedPassword,
       token,  // Store the token (can be an API key or JWT token later)
+      email_verified: false, // Add the email_verified field
       createdAt: new Date(),
     };
 
