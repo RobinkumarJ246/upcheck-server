@@ -57,7 +57,7 @@ app.get('/api/data', async (req, res) => {
 });
 
 // Registration endpoint v2
-app.post('/api/v2/auth/register', async (req, res) => {
+app.post('/api/v1/auth/register', async (req, res) => {
   const { displayName, username, email, password } = req.body;
 
   try {
@@ -90,7 +90,7 @@ app.post('/api/v2/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/v1/auth/register', async (req, res) => {
+app.post('/api/v2/auth/register', async (req, res) => {
   const { displayName, username, email, password, token } = req.body;
 
   try {
@@ -149,6 +149,44 @@ app.post('/api/v1/auth/login', async (req, res) => {
     if (isPasswordValid) {
       // Login successful
       return res.status(200).json({ message: "Login successful", userId: user._id });
+    } else {
+      // Incorrect password
+      return res.status(401).json({ message: "Invalid password" });
+    }
+  } catch (error) {
+    console.error("Error during login:", error);
+    res.status(500).json({ message: "Error during login" });
+  }
+});
+
+app.post('/api/v2/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const db = dbClient.db('app'); // Replace with your database name
+    const collection = db.collection('users'); // Replace with your collection name
+
+    // Find user by email
+    const user = await collection.findOne({ email });
+
+    // If user not found, respond with an error
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Compare the provided password with the stored hashed password
+    const isPasswordValid = await bcrypt.compare(password, user.password); // Assume user.password is hashed
+
+    if (isPasswordValid) {
+      // Login successful, return user details and token
+      return res.status(200).json({
+        message: "Login successful",
+        userId: user._id,
+        displayName: user.displayName, // Assuming user has this field
+        username: user.username, // Assuming user has this field
+        email: user.email, // Return user's email
+        token: user.token // Return the existing token from the database
+      });
     } else {
       // Incorrect password
       return res.status(401).json({ message: "Invalid password" });
