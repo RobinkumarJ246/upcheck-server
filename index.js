@@ -250,7 +250,7 @@ app.post('/api/v1/auth/verify-code', async (req, res) => {
     // await db.collection('users').updateOne({ userId }, { $set: { emailVerified: true } });
     
     // Optionally: Remove the used verification code from the database
-    await collection.deleteOne({ email, code: verificationCode });
+    //await collection.deleteOne({ email, code: verificationCode });
 
     res.status(200).json({ message: 'Email verified successfully' });
   } catch (err) {
