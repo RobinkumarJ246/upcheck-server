@@ -187,12 +187,14 @@ app.put('/api/v2/auth/updateProfile', async (req, res) => {
           phoneNumber,           // Update or add the 'phoneNumber' field
           bio,                   // Update or add the 'bio' field
         },
-      },
-      { upsert: true }  // Create the document if it does not exist
+      }
     );
 
-    if (result.modifiedCount > 0 || result.upsertedCount > 0) {
+    // Check if the user was found and updated
+    if (result.modifiedCount > 0) {
       res.status(200).json({ message: 'Profile updated successfully.' });
+    } else if (result.matchedCount > 0) {
+      res.status(200).json({ message: 'Profile unchanged (already up to date).' });
     } else {
       res.status(404).json({ message: 'User not found.' });
     }
