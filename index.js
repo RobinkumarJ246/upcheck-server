@@ -224,7 +224,7 @@ app.get('/api/users/email/:email', async (req, res) => {
 app.post('/api/ponds', async (req, res) => {
   try {
     const db = dbClient.db('app');
-    const userEmail = req.body.userEmail; // Assuming you're passing user email in the pond data
+    const userEmail = req.body.owner_email; // Assuming you're passing user email in the pond data
 
     // Fetch user by email
     const user = await db.collection('users').findOne({ email: userEmail });
