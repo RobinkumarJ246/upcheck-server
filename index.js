@@ -170,27 +170,28 @@ app.post('/api/v2/auth/register', async (req, res) => {
 
 // Update user profile endpoint
 app.put('/api/v2/auth/updateProfile', async (req, res) => {
-  const { userId, cultivation, experience, address, phoneNumber, bio } = req.body;
+  const { email, cultivation, experience, address, phoneNumber, bio } = req.body;
 
   try {
     const db = dbClient.db('app');
     const collection = db.collection('users');
 
-    // Update the user's profile based on their userId (_id)
+    // Find the user by their email
     const result = await collection.updateOne(
-      { _id: new ObjectId(userId) },
+      { email },  // Identify user based on email
       {
         $set: {
-          cultivation,
-          experience,
-          address,
-          phoneNumber,
-          bio,
+          cultivation,           // Update or add the 'cultivation' field
+          experience,            // Update or add the 'experience' field
+          address,               // Update or add the 'address' field
+          phoneNumber,           // Update or add the 'phoneNumber' field
+          bio,                   // Update or add the 'bio' field
         },
-      }
+      },
+      { upsert: true }  // Create the document if it does not exist
     );
 
-    if (result.modifiedCount > 0) {
+    if (result.modifiedCount > 0 || result.upsertedCount > 0) {
       res.status(200).json({ message: 'Profile updated successfully.' });
     } else {
       res.status(404).json({ message: 'User not found.' });
