@@ -238,8 +238,9 @@ app.post('/api/ponds', async (req, res) => {
 
     // Save pond data in 'ponds' collection
     const result = await db.collection('ponds').insertOne(pondData);
-    res.status(201).json(result.ops[0]); // Return the saved pond data
+    res.status(201).json({ ...pondData, _id: result.insertedId }); // Return the saved pond data
   } catch (error) {
+    console.error('Error adding pond details:', error);
     res.status(400).json({ message: error.message });
   }
 });
