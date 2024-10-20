@@ -5,6 +5,7 @@ const axios = require('axios'); // Use axios to keep the server alive
 const nodemailer = require('nodemailer');
 const http = require('http');
 const crypto = require('crypto');
+const { ObjectId } = require('mongodb');
 
 const app = express();
 const PORT = process.env.PORT || 3000; // Render assigns a port
@@ -204,11 +205,15 @@ app.put('/api/v2/auth/updateProfile', async (req, res) => {
   }
 });
 
-//Get user email from database
+// Get user email from database
 app.get('/api/users/email/:email', async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.params.email });
+    const db = dbClient.db('app');
+    const collection = db.collection('users');
+
+    const user = await collection.findOne({ email: req.params.email });
     if (!user) return res.status(404).json({ message: 'User not found' });
+
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -217,21 +222,43 @@ app.get('/api/users/email/:email', async (req, res) => {
 
 // Store pond details
 app.post('/api/ponds', async (req, res) => {
-  const pond = new Pond(req.body);
   try {
-    const savedPond = await pond.save();
-    res.status(201).json(savedPond);
+    const db = dbClient.db('app');
+    const userEmail = req.body.userEmail; // Assuming you're passing user email in the pond data
+
+    // Fetch user by email
+    const user = await db.collection('users').findOne({ email: userEmail });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Prepare pond data to include user ID
+    const pondData = {
+      ...req.body,
+      userId: user._id // Associate pond with user by their ID
+    };
+
+    // Save pond data in 'ponds' collection
+    const result = await db.collection('ponds').insertOne(pondData);
+    res.status(201).json(result.ops[0]); // Return the saved pond data
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 });
 
+
 // Update user details
 app.put('/api/users/:id', async (req, res) => {
   try {
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updatedUser) return res.status(404).json({ message: 'User not found' });
-    res.json(updatedUser);
+    const db = dbClient.db('app');
+    const collection = db.collection('users');
+
+    const result = await collection.updateOne(
+      { _id: new ObjectId(req.params.id) }, // Convert string to ObjectId
+      { $set: req.body }
+    );
+
+    if (result.matchedCount === 0) return res.status(404).json({ message: 'User not found' });
+
+    res.json({ message: 'User updated successfully' });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
