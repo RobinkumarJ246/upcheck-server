@@ -168,6 +168,39 @@ app.post('/api/v2/auth/register', async (req, res) => {
   }
 });
 
+// Update user profile endpoint
+app.put('/api/v2/auth/updateProfile', async (req, res) => {
+  const { userId, cultivation, experience, address, phoneNumber, bio } = req.body;
+
+  try {
+    const db = dbClient.db('app');
+    const collection = db.collection('users');
+
+    // Update the user's profile based on their userId (_id)
+    const result = await collection.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          cultivation,
+          experience,
+          address,
+          phoneNumber,
+          bio,
+        },
+      }
+    );
+
+    if (result.modifiedCount > 0) {
+      res.status(200).json({ message: 'Profile updated successfully.' });
+    } else {
+      res.status(404).json({ message: 'User not found.' });
+    }
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ message: 'Error updating profile.' });
+  }
+});
+
 //Welcome users
 
 app.post('/api/v1/mailing/welcome', async (req, res) => {
