@@ -204,6 +204,41 @@ app.put('/api/v2/auth/updateProfile', async (req, res) => {
   }
 });
 
+//Get user email from database
+app.get('/api/users/email/:email', async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.params.email });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Store pond details
+app.post('/api/ponds', async (req, res) => {
+  const pond = new Pond(req.body);
+  try {
+    const savedPond = await pond.save();
+    res.status(201).json(savedPond);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Update user details
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updatedUser) return res.status(404).json({ message: 'User not found' });
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+
+
 //Welcome users
 
 app.post('/api/v1/mailing/welcome', async (req, res) => {
