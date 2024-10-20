@@ -169,6 +169,29 @@ app.post('/api/v2/auth/register', async (req, res) => {
   }
 });
 
+// Endpoint to fetch user _id based on email
+app.post('/api/v2/auth/get-user-id', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const db = dbClient.db('app');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ email }, { projection: { _id: 1 } });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Send back the user's _id
+    res.status(200).json({ userId: user._id });
+  } catch (error) {
+    console.error("Error fetching user ID:", error);
+    res.status(500).json({ message: "Error fetching user ID" });
+  }
+});
+
 // Update user profile endpoint
 app.put('/api/v2/auth/updateProfile', async (req, res) => {
   const { email, cultivation, experience, address, phoneNumber, bio } = req.body;
